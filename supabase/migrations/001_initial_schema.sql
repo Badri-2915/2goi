@@ -40,12 +40,23 @@ CREATE TABLE IF NOT EXISTS clicks (
     clicked_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
+-- Daily click aggregation table (pre-computed for fast analytics queries)
+CREATE TABLE IF NOT EXISTS daily_click_stats (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    link_id UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    click_count INTEGER DEFAULT 0 NOT NULL,
+    CONSTRAINT uq_daily_stats_link_date UNIQUE (link_id, date)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_links_short_code ON links(short_code);
 CREATE INDEX IF NOT EXISTS idx_links_user_id ON links(user_id);
 CREATE INDEX IF NOT EXISTS idx_links_is_active ON links(is_active);
 CREATE INDEX IF NOT EXISTS idx_clicks_link_id ON clicks(link_id);
 CREATE INDEX IF NOT EXISTS idx_clicks_clicked_at ON clicks(clicked_at);
+CREATE INDEX IF NOT EXISTS idx_daily_stats_link_id ON daily_click_stats(link_id);
+CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_click_stats(date);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- Composite index for the most common query pattern (redirect lookup)

@@ -1,13 +1,15 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func, cast, Date, update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from user_agents import parse as parse_user_agent
 
 from app.models.click import Click
 from app.models.link import Link
+from app.models.daily_stats import DailyClickStats
 from app.services.shortener import hash_ip
 
 
@@ -44,6 +46,18 @@ async def log_click(
     )
 
     db.add(click)
+
+    # Upsert daily click aggregation (INSERT ... ON CONFLICT UPDATE)
+    today = date.today()
+    stmt = pg_insert(DailyClickStats).values(
+        link_id=link_id, date=today, click_count=1
+    )
+    stmt = stmt.on_conflict_do_update(
+        constraint="uq_daily_stats_link_date",
+        set_={"click_count": DailyClickStats.click_count + 1},
+    )
+    await db.execute(stmt)
+
     await db.commit()
 
 
@@ -98,15 +112,11 @@ async def get_analytics(
     )
     browsers = [{"browser": row[0] or "Unknown", "count": row[1]} for row in browser_result.all()]
 
-    # Daily clicks (last N days)
+    # Daily clicks from pre-aggregated table (fast O(days) query)
     daily_result = await db.execute(
-        select(
-            cast(Click.clicked_at, Date).label("date"),
-            func.count(Click.id).label("count"),
-        )
-        .where(Click.link_id == link.id)
-        .group_by(cast(Click.clicked_at, Date))
-        .order_by(cast(Click.clicked_at, Date).desc())
+        select(DailyClickStats.date, DailyClickStats.click_count)
+        .where(DailyClickStats.link_id == link.id)
+        .order_by(DailyClickStats.date.desc())
         .limit(days)
     )
     daily_clicks = [
