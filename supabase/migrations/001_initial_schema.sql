@@ -12,9 +12,13 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
+-- Sequence for Base62 short code generation (starts at 10000 for 3+ char codes)
+CREATE SEQUENCE IF NOT EXISTS link_id_seq START WITH 10000 INCREMENT BY 1;
+
 -- Links table
 CREATE TABLE IF NOT EXISTS links (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sequence_id BIGINT UNIQUE NOT NULL DEFAULT nextval('link_id_seq'),
     original_url TEXT NOT NULL,
     short_code VARCHAR(20) UNIQUE NOT NULL,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,

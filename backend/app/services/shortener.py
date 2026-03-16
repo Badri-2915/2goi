@@ -1,5 +1,3 @@
-import string
-import random
 import hashlib
 import qrcode
 import io
@@ -16,11 +14,21 @@ from app.config import get_settings
 
 settings = get_settings()
 
-BASE62_CHARS = string.ascii_letters + string.digits
+# Base62 alphabet: 0-9, a-z, A-Z (62 chars → supports 62^6 = 56B+ unique codes)
+BASE62_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-def generate_short_code(length: int = 5) -> str:
-    return ''.join(random.choices(BASE62_CHARS, k=length))
+def encode_base62(num: int) -> str:
+    """Encode an integer to a Base62 string. Used with sequential DB IDs to
+    generate collision-free short codes without any duplicate checks."""
+    if num == 0:
+        return BASE62_ALPHABET[0]
+    base = len(BASE62_ALPHABET)
+    encoded = []
+    while num:
+        num, rem = divmod(num, base)
+        encoded.append(BASE62_ALPHABET[rem])
+    return ''.join(reversed(encoded))
 
 
 def generate_qr_code(url: str) -> str:
@@ -51,26 +59,15 @@ async def create_short_link(
         )
         if existing.scalar_one_or_none():
             raise ValueError(f"Custom alias '{custom_alias}' is already taken")
-        short_code = custom_alias
-    else:
-        # Generate unique code with collision retry
-        for _ in range(10):
-            short_code = generate_short_code()
-            existing = await db.execute(
-                select(Link).where(Link.short_code == short_code)
-            )
-            if not existing.scalar_one_or_none():
-                break
-        else:
-            raise ValueError("Failed to generate unique short code. Please try again.")
 
     expires_at = None
     if expires_in:
         expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
 
+    # Insert with a temporary short_code (will be replaced by Base62-encoded sequence_id)
     link = Link(
         original_url=original_url,
-        short_code=short_code,
+        short_code=custom_alias or "__pending__",
         user_id=user_id,
         click_count=0,
         is_active=True,
@@ -78,6 +75,12 @@ async def create_short_link(
     )
 
     db.add(link)
+    await db.flush()  # Flush to get the DB-generated sequence_id
+
+    # If no custom alias, generate short_code from sequential ID via Base62
+    if not custom_alias:
+        link.short_code = encode_base62(link.sequence_id)
+
     await db.commit()
     await db.refresh(link)
     return link
