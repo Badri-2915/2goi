@@ -1,6 +1,13 @@
 # Stage 1: Build frontend
 FROM node:20-slim AS frontend-build
 WORKDIR /frontend
+
+# Frontend env vars must be available at build time (Vite embeds them)
+# These are PUBLIC keys (anon key is designed to be exposed in frontend code)
+ENV VITE_API_URL=""
+ENV VITE_SUPABASE_URL=https://svggdrykoxktgoimrqny.supabase.co
+ENV VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z2dkcnlrb3hrdGdvaW1ycW55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzY4NjIsImV4cCI6MjA4OTI1Mjg2Mn0.LEXeqEiUNgE16uselNYF54rbSLPBJ6qBF22j7c8Fdjo
+
 COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ .
