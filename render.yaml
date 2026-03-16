@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: 2goi
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_SYNC
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: 2goi-redis
+          type: redis
+          property: connectionString
+      - key: BASE_URL
+        value: https://2goi.in
+      - key: FRONTEND_URL
+        value: https://2goi.in
+      - key: ENVIRONMENT
+        value: production
+      - key: RATE_LIMIT_ANON
+        value: "100"
+      - key: RATE_LIMIT_AUTH
+        value: "1000"
+      - key: CORS_ORIGINS
+        value: https://2goi.in
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  - type: redis
+    name: 2goi-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
