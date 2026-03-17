@@ -117,6 +117,24 @@ async def favicon():
     return {"detail": "Not found"}
 
 
+@app.get("/robots.txt")
+async def robots():
+    """Serve robots.txt for search engine crawlers."""
+    robots_path = STATIC_DIR / "robots.txt"
+    if robots_path.exists():
+        return FileResponse(str(robots_path), media_type="text/plain")
+    return {"detail": "Not found"}
+
+
+@app.get("/sitemap.xml")
+async def sitemap():
+    """Serve sitemap.xml for search engine indexing."""
+    sitemap_path = STATIC_DIR / "sitemap.xml"
+    if sitemap_path.exists():
+        return FileResponse(str(sitemap_path), media_type="application/xml")
+    return {"detail": "Not found"}
+
+
 @app.get("/")
 async def root():
     """Serve the React SPA homepage (or API info if no frontend build exists)."""

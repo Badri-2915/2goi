@@ -1,0 +1,9 @@
+# Allow all search engines to crawl everything
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://2goi.in/sitemap.xml
+
+# Disallow API endpoints (not useful for search engines)
+Disallow: /api/
