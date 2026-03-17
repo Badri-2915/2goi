@@ -25,7 +25,7 @@ import { ArrowLeft, MousePointerClick, Globe, Monitor, Loader2 } from 'lucide-re
 import toast from 'react-hot-toast'
 
 // Color palette for pie chart segments
-const COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#10b981', '#f472b6', '#6366f1', '#14b8a6']
+const COLORS = ['#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6']
 
 export default function AnalyticsPage() {
   const { shortCode } = useParams()
@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
       </div>
     )
   }
@@ -60,7 +60,7 @@ export default function AnalyticsPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-slate-400 text-lg">Analytics not found</p>
-        <Link to="/dashboard" className="text-violet-400 hover:text-violet-300 no-underline">
+        <Link to="/dashboard" className="text-indigo-400 hover:text-indigo-300 no-underline">
           Back to Dashboard
         </Link>
       </div>
@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-white">Analytics</h1>
-              <p className="text-violet-400 text-sm font-medium mt-0.5">
+              <p className="text-indigo-400 text-sm font-medium mt-0.5">
                 2goi.in/{analytics.short_code}
               </p>
             </div>
@@ -94,7 +94,7 @@ export default function AnalyticsPage() {
                 onClick={() => setDays(d)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border-none cursor-pointer ${
                   days === d
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-indigo-600 text-white'
                     : 'bg-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
@@ -108,8 +108,8 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="p-5 bg-slate-800/40 border border-slate-700/40 rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-600/20 rounded-lg flex items-center justify-center">
-                <MousePointerClick className="w-5 h-5 text-violet-400" />
+              <div className="w-10 h-10 bg-indigo-600/20 rounded-lg flex items-center justify-center">
+                <MousePointerClick className="w-5 h-5 text-indigo-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{analytics.total_clicks}</p>
@@ -153,9 +153,9 @@ export default function AnalyticsPage() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
                   labelStyle={{ color: '#e2e8f0' }}
-                  itemStyle={{ color: '#8b5cf6' }}
+                  itemStyle={{ color: '#6366f1' }}
                 />
-                <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 4 }} />
+                <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} dot={{ fill: '#6366f1', r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -225,7 +225,7 @@ export default function AnalyticsPage() {
                     <span className="text-sm text-slate-300 w-24 shrink-0">{b.browser}</span>
                     <div className="flex-1 bg-slate-700/30 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-violet-500"
+                        className="h-full rounded-full bg-indigo-500"
                         style={{ width: `${pct}%` }}
                       />
                     </div>

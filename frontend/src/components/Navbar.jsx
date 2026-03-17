@@ -26,8 +26,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 text-white font-bold text-xl no-underline">
-            <Link2 className="w-6 h-6 text-violet-400" />
-            <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+            <Link2 className="w-6 h-6 text-indigo-400" />
+            <span className="bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">
               2GOI
             </span>
           </Link>
@@ -61,7 +61,7 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors no-underline"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors no-underline"
               >
                 Sign In
               </Link>

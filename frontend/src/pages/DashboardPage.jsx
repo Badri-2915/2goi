@@ -95,7 +95,7 @@ export default function DashboardPage() {
             <select
               value={sortBy}
               onChange={(e) => { setSortBy(e.target.value); setPage(1) }}
-              className="bg-slate-800 border border-slate-700 text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none"
+              className="bg-slate-800 border border-slate-700 text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               {sortOptions.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -107,14 +107,14 @@ export default function DashboardPage() {
         {/* Links Table */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
           </div>
         ) : links.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-slate-400 text-lg mb-4">No links yet</p>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-lg font-medium transition-colors no-underline"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg font-medium transition-colors no-underline"
             >
               Create your first short link
             </Link>
@@ -139,7 +139,7 @@ export default function DashboardPage() {
                         href={link.short_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-violet-400 hover:text-violet-300 font-medium text-sm no-underline flex items-center gap-1"
+                        className="text-indigo-400 hover:text-indigo-300 font-medium text-sm no-underline flex items-center gap-1"
                       >
                         {link.short_url.replace('https://', '')}
                         <ExternalLink className="w-3 h-3" />

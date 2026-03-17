@@ -52,9 +52,9 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative pt-20 pb-16 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-violet-900/20 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/20 via-transparent to-transparent pointer-events-none" />
         <div className="relative max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-full text-violet-300 text-sm mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-300 text-sm mb-6">
             <Zap className="w-3.5 h-3.5" />
             Sub-5ms redirects powered by Redis
           </div>
@@ -62,7 +62,7 @@ export default function HomePage() {
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight mb-6">
             Shorten URLs.
             <br />
-            <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-indigo-400 via-blue-400 to-sky-400 bg-clip-text text-transparent">
               Track Everything.
             </span>
           </h1>
@@ -86,10 +86,10 @@ export default function HomePage() {
             {features.map((feature, i) => (
               <div
                 key={i}
-                className="p-6 bg-slate-800/40 border border-slate-700/40 rounded-xl hover:border-violet-500/30 transition-all group"
+                className="p-6 bg-slate-800/40 border border-slate-700/40 rounded-xl hover:border-indigo-500/30 transition-all group"
               >
-                <div className="w-10 h-10 bg-violet-600/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-violet-600/30 transition-colors">
-                  <feature.icon className="w-5 h-5 text-violet-400" />
+                <div className="w-10 h-10 bg-indigo-600/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-indigo-600/30 transition-colors">
+                  <feature.icon className="w-5 h-5 text-indigo-400" />
                 </div>
                 <h3 className="text-white font-semibold text-lg mb-2">{feature.title}</h3>
                 <p className="text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
@@ -103,7 +103,7 @@ export default function HomePage() {
       <footer className="py-8 px-4 border-t border-slate-800">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-slate-400 text-sm">
-            <Link2 className="w-4 h-4 text-violet-400" />
+            <Link2 className="w-4 h-4 text-indigo-400" />
             <span className="font-semibold text-white">2GOI</span>
             <span>- Production-grade URL shortener</span>
           </div>
