@@ -117,6 +117,15 @@ async def favicon():
     return {"detail": "Not found"}
 
 
+@app.get("/google9b58524465f218d0.html")
+async def google_verification():
+    """Serve Google Search Console verification file."""
+    path = STATIC_DIR / "google9b58524465f218d0.html"
+    if path.exists():
+        return FileResponse(str(path), media_type="text/html")
+    return {"detail": "Not found"}
+
+
 @app.get("/robots.txt")
 async def robots():
     """Serve robots.txt for search engine crawlers."""
