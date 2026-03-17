@@ -1,3 +1,19 @@
+/**
+ * AnalyticsPage — Detailed click analytics for a specific short link.
+ *
+ * Shows:
+ * 1. Stats cards: total clicks, number of countries, device types
+ * 2. Line chart: clicks over time (daily trend from pre-aggregated table)
+ * 3. Bar chart: top countries by click count
+ * 4. Pie chart: device type breakdown (mobile/tablet/desktop)
+ * 5. Progress bars: browser breakdown
+ *
+ * Time range selector: 7 days, 30 days, or 90 days
+ * Uses Recharts library for all visualizations.
+ *
+ * Requires authentication (wrapped in ProtectedRoute).
+ */
+
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getLinkAnalytics } from '../lib/api'
@@ -8,6 +24,7 @@ import {
 import { ArrowLeft, MousePointerClick, Globe, Monitor, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+// Color palette for pie chart segments
 const COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#10b981', '#f472b6', '#6366f1', '#14b8a6']
 
 export default function AnalyticsPage() {

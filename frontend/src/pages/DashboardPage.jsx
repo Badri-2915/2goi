@@ -1,3 +1,17 @@
+/**
+ * DashboardPage — Shows all links created by the logged-in user.
+ *
+ * Features:
+ * - Paginated table of links with short URL, original URL, clicks, date
+ * - Sort by: newest, most clicks, or expiring soon
+ * - Copy short URL to clipboard
+ * - View analytics for each link
+ * - Delete links (soft-delete with cache invalidation)
+ * - Pagination controls (previous/next page)
+ *
+ * Requires authentication (wrapped in ProtectedRoute).
+ */
+
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { getUserLinks, deleteLink } from '../lib/api'

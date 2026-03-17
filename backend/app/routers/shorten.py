@@ -1,3 +1,17 @@
+"""
+Shorten Router — POST /api/shorten endpoint.
+
+Accepts a URL and returns a shortened link with QR code.
+Works for both anonymous and authenticated users.
+
+Flow:
+  1. Receive URL (and optional custom alias, expiration)
+  2. Create short link in DB (Base62 from sequential ID)
+  3. Prime Redis cache with the new link
+  4. Generate QR code (Base64 PNG)
+  5. Return short_url, short_code, qr_code, expires_at
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
@@ -16,6 +30,7 @@ router = APIRouter(tags=["Shorten"])
 
 @router.post("/api/shorten", response_model=ShortenResponse, status_code=status.HTTP_201_CREATED)
 async def shorten_url(
+    # POST /api/shorten — Create a new short link
     payload: LinkCreate,
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),

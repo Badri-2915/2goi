@@ -1,6 +1,19 @@
+/**
+ * HomePage — Landing page with the URL shortener form and feature showcase.
+ *
+ * Sections:
+ * 1. Hero section with headline, subtitle, and the ShortenForm component
+ * 2. Features grid showing 6 key features with icons
+ * 3. Footer with branding and tech stack
+ *
+ * This page is accessible to everyone (no auth required).
+ * Anonymous users can shorten URLs; logged-in users get links saved to their account.
+ */
+
 import ShortenForm from '../components/ShortenForm'
 import { Link2, Zap, BarChart3, QrCode, Shield, Globe } from 'lucide-react'
 
+// Feature cards displayed in the grid below the hero section
 const features = [
   {
     icon: Zap,

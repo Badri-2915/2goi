@@ -1,3 +1,17 @@
+"""
+Analytics Router — GET /api/analytics/{short_code} endpoint.
+
+Returns detailed click analytics for a specific short link:
+- Total clicks
+- Country breakdown (top 10)
+- Device type breakdown (mobile/tablet/desktop)
+- Browser breakdown (top 10)
+- Daily click trend (from pre-aggregated table)
+
+Requires authentication. Users can only view analytics for their own links.
+The "days" query parameter controls the time range (default 30, max 365).
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
@@ -18,6 +32,7 @@ async def get_link_analytics(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_auth),
 ):
+    """Get analytics for a short link. Only the link owner can view analytics."""
     analytics = await get_analytics(db, short_code, current_user.id, days)
 
     if not analytics:

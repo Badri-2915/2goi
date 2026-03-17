@@ -1,3 +1,15 @@
+/**
+ * SignupPage — New user registration with email/password and Google OAuth.
+ *
+ * Features:
+ * - Email/password signup via Supabase Auth
+ * - Password confirmation field
+ * - Minimum password length validation (6 chars)
+ * - Google OAuth signup (same as login — creates account if new)
+ * - After signup, user gets a confirmation email from Supabase
+ * - Link to login page for existing users
+ */
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'

@@ -1,3 +1,20 @@
+"""
+Redirect Router — GET /{short_code} endpoint (the core of the URL shortener).
+
+This is the most performance-critical endpoint. When someone visits
+https://2goi.in/2Bi, this router:
+
+1. Checks Redis cache first (cache hit = sub-5ms response)
+2. On cache miss, queries the database
+3. Stores the result in Redis for next time
+4. Logs the click asynchronously (doesn't slow down the redirect)
+5. Returns HTTP 302 redirect to the original URL
+
+Important: This router uses a catch-all pattern (/{short_code}), so it MUST
+be registered LAST in main.py to avoid intercepting API and frontend routes.
+It explicitly skips paths like "api", "login", "dashboard", "assets", etc.
+"""
+
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks, status
 from fastapi.responses import RedirectResponse
@@ -18,6 +35,10 @@ async def _log_click_background(
     user_agent: str,
     referrer: str,
 ):
+    """
+    Background task: log click analytics after the redirect response is sent.
+    Uses its own DB session since BackgroundTasks run after the response.
+    """
     async with AsyncSessionLocal() as db:
         await log_click(
             db=db,
@@ -36,7 +57,8 @@ async def redirect_short_url(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
-    # Skip API paths and frontend routes
+    """Redirect a short URL to its original destination. Returns HTTP 302."""
+    # Skip API paths and frontend routes (these should NOT be treated as short codes)
     frontend_routes = {"login", "signup", "dashboard", "analytics", "favicon.svg", "assets"}
     if short_code.startswith("api") or short_code in frontend_routes or short_code.startswith("assets"):
         raise HTTPException(status_code=404, detail="Not found")

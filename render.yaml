@@ -1,44 +1,67 @@
+# =============================================================================
+# Render Blueprint — Infrastructure-as-Code for deploying to Render.com
+# =============================================================================
+#
+# This file defines all services needed to run 2GOI:
+# 1. Web service (Docker) — FastAPI backend + React frontend
+# 2. Redis service — For caching short link redirects
+#
+# To deploy: Render Dashboard → New + → Blueprint → Connect GitHub repo
+# Render reads this file and creates both services automatically.
+#
+# Environment variables marked "sync: false" must be set manually in
+# the Render dashboard (they contain secrets like database passwords).
+# =============================================================================
+
 services:
+  # ---- Web Service: FastAPI + React (single container) ----
   - type: web
     name: 2goi
     runtime: docker
-    plan: free
-    dockerfilePath: ./Dockerfile
+    plan: free                    # Free tier (750 hours/month, sleeps after 15min)
+    dockerfilePath: ./Dockerfile  # Multi-stage build (see Dockerfile comments)
     envVars:
-      - key: DATABASE_URL
+      # Secret env vars (set manually in Render dashboard)
+      - key: DATABASE_URL         # PostgreSQL async connection string (asyncpg)
         sync: false
-      - key: DATABASE_URL_SYNC
+      - key: DATABASE_URL_SYNC    # PostgreSQL sync connection string (psycopg2)
         sync: false
-      - key: SUPABASE_URL
+      - key: SUPABASE_URL         # Supabase project URL
         sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
+      - key: SUPABASE_SERVICE_ROLE_KEY  # Admin key (NEVER expose in frontend)
         sync: false
-      - key: SUPABASE_ANON_KEY
+      - key: SUPABASE_ANON_KEY    # Public key (also hardcoded in Dockerfile for frontend)
         sync: false
-      - key: SUPABASE_JWT_SECRET
+      - key: SUPABASE_JWT_SECRET  # For HS256 token verification fallback
         sync: false
+
+      # Redis URL (auto-populated from the Redis service below)
       - key: REDIS_URL
         fromService:
           name: 2goi-redis
           type: redis
           property: connectionString
-      - key: BASE_URL
-        value: https://2goi.in
-      - key: FRONTEND_URL
-        value: https://2goi.in
-      - key: ENVIRONMENT
-        value: production
-      - key: RATE_LIMIT_ANON
-        value: "100"
-      - key: RATE_LIMIT_AUTH
-        value: "1000"
-      - key: CORS_ORIGINS
-        value: https://2goi.in
-    healthCheckPath: /api/health
-    autoDeploy: true
 
+      # Public config values
+      - key: BASE_URL             # Domain used for constructing short URLs
+        value: https://2goi.in
+      - key: FRONTEND_URL         # Same as BASE_URL (single-domain architecture)
+        value: https://2goi.in
+      - key: ENVIRONMENT          # Controls SQL logging, debug mode, etc.
+        value: production
+      - key: RATE_LIMIT_ANON      # Max requests/min for anonymous users
+        value: "100"
+      - key: RATE_LIMIT_AUTH      # Max requests/min for authenticated users
+        value: "1000"
+      - key: CORS_ORIGINS         # Allowed origins for CORS
+        value: https://2goi.in
+
+    healthCheckPath: /api/health  # Render pings this to check if app is running
+    autoDeploy: true              # Auto-deploy on every push to GitHub
+
+  # ---- Redis Service: In-memory cache for fast redirects ----
   - type: redis
     name: 2goi-redis
-    plan: free
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
+    plan: free                    # Free tier (25MB, no persistence)
+    maxmemoryPolicy: allkeys-lru  # Evict least-recently-used keys when memory is full
+    ipAllowList: []               # Allow connections from all Render services

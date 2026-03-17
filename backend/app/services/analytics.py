@@ -1,3 +1,25 @@
+"""
+Analytics Service — Click logging and analytics data retrieval.
+
+This service handles two main responsibilities:
+
+1. LOG CLICKS (log_click function):
+   - Parses User-Agent string to extract browser and device type
+   - Hashes the IP address (SHA-256) for privacy
+   - Inserts a raw click event into the clicks table
+   - Upserts the daily_click_stats table (INSERT ON CONFLICT UPDATE)
+   - Both operations happen in a single DB transaction
+
+2. GET ANALYTICS (get_analytics function):
+   - Returns total clicks, country breakdown, device breakdown, browser breakdown
+   - Daily click trend uses the pre-aggregated daily_click_stats table
+     (O(days) query instead of scanning O(total_clicks) raw events)
+
+The daily aggregation pattern:
+   INSERT INTO daily_click_stats (link_id, date, click_count) VALUES (?, today, 1)
+   ON CONFLICT (link_id, date) DO UPDATE SET click_count = click_count + 1
+"""
+
 from datetime import datetime, date
 from typing import Optional
 from uuid import UUID
@@ -21,6 +43,15 @@ async def log_click(
     referrer: Optional[str] = None,
     country: Optional[str] = None,
 ):
+    """
+    Log a single click event. Called asynchronously via BackgroundTasks
+    so it doesn't slow down the redirect response.
+
+    This function does two things in one transaction:
+    1. Inserts a raw click row (for detailed per-click analytics)
+    2. Upserts daily_click_stats (for fast daily trend queries)
+    """
+    # Parse User-Agent to get browser name and device type
     browser = None
     device_type = None
 
@@ -34,8 +65,10 @@ async def log_click(
         else:
             device_type = "desktop"
 
+    # Hash the IP for privacy (we never store raw IP addresses)
     ip_hashed = hash_ip(ip_address) if ip_address else None
 
+    # Insert raw click event into the clicks table
     click = Click(
         link_id=link_id,
         country=country or "Unknown",
@@ -47,7 +80,9 @@ async def log_click(
 
     db.add(click)
 
-    # Upsert daily click aggregation (INSERT ... ON CONFLICT UPDATE)
+    # Upsert daily click aggregation using PostgreSQL INSERT ... ON CONFLICT
+    # If row exists for (link_id, today): increment click_count
+    # If row doesn't exist: create new row with click_count=1
     today = date.today()
     stmt = pg_insert(DailyClickStats).values(
         link_id=link_id, date=today, click_count=1
@@ -67,6 +102,16 @@ async def get_analytics(
     user_id: Optional[UUID] = None,
     days: int = 30,
 ):
+    """
+    Get complete analytics for a short link.
+
+    Returns:
+    - total_clicks: Total number of clicks ever
+    - countries: Top 10 countries by click count
+    - devices: Breakdown by device type (mobile/tablet/desktop)
+    - browsers: Top 10 browsers by click count
+    - daily_clicks: Click count per day (from pre-aggregated table, very fast)
+    """
     # Get the link
     query = select(Link).where(Link.short_code == short_code, Link.is_active == True)
     if user_id:

@@ -1,3 +1,16 @@
+/**
+ * ShortenForm — The main URL shortening form on the homepage.
+ *
+ * Features:
+ * - URL input with validation
+ * - Advanced options (custom alias, expiration time)
+ * - Shows shortened URL with copy-to-clipboard button
+ * - Displays QR code with download option
+ * - Works for both anonymous and logged-in users
+ *
+ * Flow: User enters URL → calls POST /api/shorten → displays result with QR code
+ */
+
 import { useState } from 'react'
 import { shortenUrl } from '../lib/api'
 import { Link2, Copy, Check, QrCode, Settings, ChevronDown, ChevronUp } from 'lucide-react'

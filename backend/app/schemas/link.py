@@ -1,3 +1,16 @@
+"""
+Link Schemas — Pydantic models for request/response validation.
+
+These schemas define the shape of JSON data flowing through the API:
+- LinkCreate: Input for POST /api/shorten (URL, optional alias, optional TTL)
+- ShortenResponse: Output of POST /api/shorten (short_url, QR code, etc.)
+- LinkResponse: Single link in GET /api/links response
+- LinkListResponse: Paginated list of links
+
+Pydantic automatically validates all incoming data and returns
+clear error messages if validation fails (e.g., invalid URL format).
+"""
+
 from pydantic import BaseModel, HttpUrl, Field, field_validator
 from typing import Optional
 from datetime import datetime
@@ -6,6 +19,7 @@ import re
 
 
 class LinkCreate(BaseModel):
+    """Request body for POST /api/shorten."""
     url: str = Field(..., description="The original URL to shorten")
     custom_alias: Optional[str] = Field(None, max_length=20, description="Optional custom short code")
     expires_in: Optional[int] = Field(None, gt=0, description="Expiration time in seconds")
@@ -13,6 +27,7 @@ class LinkCreate(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, v):
+        """Ensure URL starts with http:// or https:// and has a valid domain."""
         pattern = re.compile(
             r'^https?://'
             r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'
@@ -28,6 +43,7 @@ class LinkCreate(BaseModel):
     @field_validator("custom_alias")
     @classmethod
     def validate_alias(cls, v):
+        """Custom alias must be 3+ chars, alphanumeric + hyphens only."""
         if v is not None:
             if not re.match(r'^[a-zA-Z0-9\-]+$', v):
                 raise ValueError("Custom alias can only contain letters, numbers, and hyphens")
@@ -37,6 +53,7 @@ class LinkCreate(BaseModel):
 
 
 class LinkResponse(BaseModel):
+    """Single link object returned in API responses."""
     id: UUID
     original_url: str
     short_code: str
@@ -51,6 +68,7 @@ class LinkResponse(BaseModel):
 
 
 class LinkListResponse(BaseModel):
+    """Paginated list of links returned by GET /api/links."""
     links: list[LinkResponse]
     total: int
     page: int
@@ -58,6 +76,7 @@ class LinkListResponse(BaseModel):
 
 
 class ShortenResponse(BaseModel):
+    """Response from POST /api/shorten with the new short link and QR code."""
     short_url: str
     short_code: str
     original_url: str

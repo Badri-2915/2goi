@@ -1,3 +1,14 @@
+/**
+ * LoginPage — User login form with email/password and Google OAuth.
+ *
+ * Features:
+ * - Email/password login via Supabase Auth
+ * - Google OAuth login (redirects to Google, then back to /dashboard)
+ * - Link to signup page for new users
+ * - Error handling with toast notifications
+ * - Loading spinner during authentication
+ */
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'

@@ -1,3 +1,13 @@
+/**
+ * Navbar — Top navigation bar shown on every page.
+ *
+ * Shows different content based on auth state:
+ * - Logged out: Home link + Sign In button
+ * - Logged in: Home link + Dashboard link + Sign Out button
+ *
+ * Uses Lucide icons and TailwindCSS for styling.
+ */
+
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Link2, LogOut, LayoutDashboard, Home } from 'lucide-react'

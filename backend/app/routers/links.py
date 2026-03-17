@@ -1,3 +1,13 @@
+"""
+Links Router — Authenticated endpoints for managing user's links.
+
+Endpoints:
+  GET  /api/links           → List all links (paginated, sortable)
+  DELETE /api/links/{id}    → Soft-delete a link + invalidate Redis cache
+
+All endpoints require authentication (JWT Bearer token).
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID

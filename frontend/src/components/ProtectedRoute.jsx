@@ -1,3 +1,15 @@
+/**
+ * ProtectedRoute — Route guard that requires authentication.
+ *
+ * Wraps any page that should only be visible to logged-in users.
+ * - If loading: shows a spinner (waiting for auth check)
+ * - If not logged in: redirects to /login
+ * - If logged in: renders the child component
+ *
+ * Usage in App.jsx:
+ *   <ProtectedRoute><DashboardPage /></ProtectedRoute>
+ */
+
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 

@@ -1,32 +1,50 @@
+# =============================================================================
+# Docker Compose — Local development setup
+# =============================================================================
+#
+# Starts the backend and Redis for local development.
+# Database is hosted on Supabase (not included here).
+#
+# Usage:
+#   docker-compose up        # Start backend + Redis
+#   docker-compose down      # Stop everything
+#   docker-compose up -d     # Start in background
+#
+# The backend runs with --reload for auto-restarting on code changes.
+# Frontend should be started separately: cd frontend && npm run dev
+# =============================================================================
+
 version: "3.8"
 
 services:
+  # ---- FastAPI Backend ----
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:8000"          # Backend API at http://localhost:8000
     volumes:
-      - ./backend:/app
+      - ./backend:/app       # Mount source code for hot-reload
     env_file:
-      - ./backend/.env
+      - ./backend/.env       # Load database, Supabase, and app config
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - ENVIRONMENT=development
+      - REDIS_URL=redis://redis:6379/0  # Override to use Docker Redis
+      - ENVIRONMENT=development          # Enable SQL logging
     depends_on:
       redis:
-        condition: service_healthy
+        condition: service_healthy  # Wait for Redis to be ready
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - twogoi-network
 
+  # ---- Redis Cache ----
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine    # Lightweight Redis image
     ports:
-      - "6379:6379"
+      - "6379:6379"          # Redis at localhost:6379
     volumes:
-      - redis-data:/data
+      - redis-data:/data     # Persist Redis data across restarts
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -35,9 +53,11 @@ services:
     networks:
       - twogoi-network
 
+# Named volume for Redis data persistence
 volumes:
   redis-data:
 
+# Shared network so backend can reach Redis by hostname "redis"
 networks:
   twogoi-network:
     driver: bridge

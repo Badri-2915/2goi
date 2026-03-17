@@ -1,3 +1,22 @@
+"""
+Main Application — FastAPI app setup and single-domain architecture.
+
+This is the entry point for the entire application. It configures:
+1. FastAPI app with lifespan (startup/shutdown events)
+2. CORS middleware for cross-origin requests
+3. Rate limiting via SlowAPI
+4. API routers (shorten, redirect, links, analytics, health)
+5. Static file serving for the React frontend (SPA)
+6. SPA fallback: any unmatched route serves index.html (for React Router)
+
+Single-Domain Architecture:
+  Everything runs on one domain (2goi.in):
+  - /api/*        → Backend API endpoints
+  - /assets/*     → Frontend static files (JS, CSS, images)
+  - /login, /dashboard, etc. → React SPA (served via index.html)
+  - /{short_code} → Redirect to original URL
+"""
+
 import os
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -16,13 +35,14 @@ from app.routers import shorten, redirect, links, analytics, health
 
 settings = get_settings()
 
-# Path to the React frontend build directory
+# Path to the React frontend build directory (copied during Docker build)
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: create tables (gracefully handle DB unavailability)
+    """Application lifespan: runs on startup and shutdown."""
+    # STARTUP: Create database tables if they don't exist
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
@@ -38,7 +58,7 @@ async def lifespan(app: FastAPI):
         print(f"Warning: Frontend static dir not found at {STATIC_DIR}")
 
     yield
-    # Shutdown: close connections
+    # SHUTDOWN: Gracefully close all connections
     try:
         await close_redis()
     except Exception:
@@ -49,6 +69,8 @@ async def lifespan(app: FastAPI):
         pass
 
 
+# Create the FastAPI application
+# API docs are served at /api/docs (Swagger) and /api/redoc (ReDoc)
 app = FastAPI(
     title="2GOI URL Shortener API",
     description="Production-grade URL shortening platform",
@@ -59,11 +81,11 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
-# Rate limiter
+# Rate limiter — prevents abuse (100 req/min anonymous, 1000 req/min authenticated)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS
+# CORS — allow requests from configured origins (same domain in production)
 origins = settings.CORS_ORIGINS.split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -73,14 +95,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers — order matters! API routes first, then catch-all redirect
-app.include_router(health.router)
-app.include_router(shorten.router)
-app.include_router(links.router)
-app.include_router(analytics.router)
-app.include_router(redirect.router)
+# Include API routers — ORDER MATTERS!
+# API routes must be registered before the catch-all redirect router,
+# otherwise /{short_code} would intercept API paths
+app.include_router(health.router)      # GET /api/health
+app.include_router(shorten.router)     # POST /api/shorten
+app.include_router(links.router)       # GET /api/links, DELETE /api/links/{id}
+app.include_router(analytics.router)   # GET /api/analytics/{short_code}
+app.include_router(redirect.router)    # GET /{short_code} (catch-all, must be last)
 
-# Serve frontend static assets (JS, CSS, images)
+# Serve frontend static assets (Vite build output: JS bundles, CSS, images)
 if STATIC_DIR.exists() and (STATIC_DIR / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(STATIC_DIR / "assets")), name="static-assets")
 
@@ -95,6 +119,7 @@ async def favicon():
 
 @app.get("/")
 async def root():
+    """Serve the React SPA homepage (or API info if no frontend build exists)."""
     index_path = STATIC_DIR / "index.html"
     if index_path.exists():
         return FileResponse(str(index_path))
@@ -108,7 +133,11 @@ async def root():
 
 @app.exception_handler(404)
 async def spa_fallback(request: Request, exc):
-    """Serve React SPA for any unmatched routes (frontend routing)."""
+    """
+    SPA Fallback: Serve index.html for any unmatched non-API routes.
+    This allows React Router to handle client-side routing.
+    Example: /login, /dashboard, /analytics/abc → all serve index.html
+    """
     index_path = STATIC_DIR / "index.html"
     if index_path.exists() and not request.url.path.startswith("/api"):
         return FileResponse(str(index_path))
