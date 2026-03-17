@@ -32,7 +32,14 @@ export default function LoginPage() {
       toast.success('Welcome back!')
       navigate('/dashboard')
     } catch (err) {
-      toast.error(err.message || 'Failed to sign in')
+      const msg = err.message || 'Failed to sign in'
+      if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials')) {
+        toast.error('Invalid email or password. If you just signed up, please confirm your email first.')
+      } else if (msg.toLowerCase().includes('email not confirmed')) {
+        toast.error('Please confirm your email before signing in. Check your inbox.')
+      } else {
+        toast.error(msg)
+      }
     } finally {
       setLoading(false)
     }

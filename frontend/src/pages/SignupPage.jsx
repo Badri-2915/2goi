@@ -41,7 +41,7 @@ export default function SignupPage() {
     setLoading(true)
     try {
       await signUp(email, password)
-      toast.success('Account created! Check your email to confirm.')
+      toast.success('Account created! Check your email to confirm (may take 1-2 minutes).', { duration: 6000 })
       navigate('/login')
     } catch (err) {
       toast.error(err.message || 'Failed to create account')
