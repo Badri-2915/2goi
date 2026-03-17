@@ -22,6 +22,7 @@
 18. [Sample Input/Output](#sample-inputoutput)
 19. [Cost Breakdown](#cost-breakdown)
 20. [Security](#security)
+21. [Setup & Configuration Guide](#setup--configuration-guide)
 
 ---
 
@@ -857,6 +858,24 @@ curl https://2goi.in/api/health
 - Tokens expire automatically (managed by Supabase)
 - Users can only view/delete their own links
 - Google OAuth configured with restricted callback URLs
+
+---
+
+## Setup & Configuration Guide
+
+For a complete step-by-step guide on configuring all external services (Supabase, Google Cloud Console, GoDaddy DNS, Render, Resend, Google Search Console), see:
+
+**[SETUP_GUIDE.md](./SETUP_GUIDE.md)**
+
+This guide covers:
+- Supabase project creation, database setup, and authentication configuration
+- Google Cloud Console OAuth setup (Login with Google)
+- GoDaddy domain registration and DNS configuration
+- Render deployment with Docker and environment variables
+- Resend email service integration for transactional emails
+- Google Search Console for SEO indexing
+- Complete environment variables reference
+- Verification checklist and troubleshooting
 
 ---
 

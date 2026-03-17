@@ -195,6 +195,15 @@ users (id UUID PK, email, plan, created_at)
 
 ---
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [DOCUMENTATION.md](./DOCUMENTATION.md) | Complete project documentation — architecture, code, API, database, deployment |
+| [SETUP_GUIDE.md](./SETUP_GUIDE.md) | Step-by-step setup guide — Supabase, Google OAuth, GoDaddy DNS, Render, Resend, Google Search Console |
+
+---
+
 ## Monthly Cost
 
 | Service | Cost |
@@ -202,4 +211,6 @@ users (id UUID PK, email, plan, created_at)
 | Domain (2goi.in) | ~₹67/month |
 | Render (web + Redis) | Free |
 | Supabase (database + auth) | Free |
+| Resend (emails) | Free (3,000/month) |
+| Google Cloud (OAuth) | Free |
 | **Total** | **~₹67/month (domain only)** |
