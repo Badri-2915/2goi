@@ -13,8 +13,9 @@ This guide walks you through setting up every external service needed to deploy 
 5. [Render Deployment (Hosting)](#5-render-deployment-hosting)
 6. [Resend (Email Service)](#6-resend-email-service)
 7. [Google Search Console (SEO)](#7-google-search-console-seo)
-8. [Environment Variables Reference](#8-environment-variables-reference)
-9. [Verification Checklist](#9-verification-checklist)
+8. [UptimeRobot (Uptime Monitoring)](#8-uptimerobot-uptime-monitoring)
+9. [Environment Variables Reference](#9-environment-variables-reference)
+10. [Verification Checklist](#10-verification-checklist)
 
 ---
 
@@ -433,7 +434,80 @@ The project already contains these SEO files:
 
 ---
 
-## 8. Environment Variables Reference
+## 8. UptimeRobot (Uptime Monitoring)
+
+UptimeRobot keeps the application alive 24/7 by preventing Render's free tier cold starts.
+
+### Why UptimeRobot Is Needed
+
+Render's free tier has a critical limitation: **it puts your service to sleep after 15 minutes of inactivity**. When the next user visits, they experience a 30-60 second cold start while the Docker container boots up, Python loads, and database connections are established. This creates a terrible user experience.
+
+UptimeRobot solves this by sending a real HTTP request to your health endpoint every 5 minutes. Since Render only checks "has any request arrived in the last 15 minutes?", these pings keep the container running permanently.
+
+### What UptimeRobot Does vs. What Render Does
+
+| Tool | Role | What It Does |
+|------|------|--------------|
+| **Render** | Hosting | Runs the Docker container, serves the app, provides the URL |
+| **UptimeRobot** | Monitoring | Sends HTTP pings every 5 min to prevent Render from sleeping the container |
+
+### Render Challenges Fixed by UptimeRobot
+
+| Render Free Tier Problem | How UptimeRobot Fixes It |
+|--------------------------|-------------------------|
+| Service sleeps after 15 min inactivity | Pings every 5 min — service never goes idle |
+| First request after sleep takes 30-60 sec (cold start) | No cold starts — container stays warm 24/7 |
+| Health checks fail during sleep (shows "degraded") | Continuous pings keep health checks green |
+| Users think the site is broken/slow | Site always responds instantly (~200-500ms) |
+
+### Step 8.1: Create UptimeRobot Account
+
+1. Go to **https://uptimerobot.com**
+2. Click **"Register for FREE"**
+3. Sign up with email or Google account
+4. Verify your email address
+
+### Step 8.2: Add a Monitor
+
+1. After login, click the green **"+ New"** button (top right)
+2. Select **"HTTP(s)"** as the monitor type
+3. Fill in the settings:
+   - **Friendly Name:** `2goi.in/api/health`
+   - **URL to Monitor:** `https://2goi.in/api/health`
+   - **Monitoring Interval:** `5 minutes` (free tier minimum)
+4. Under **"How will we notify you?"**, check your email
+5. Click **"Create Monitor"** or **"Save changes"**
+
+### Step 8.3: Verify It's Working
+
+1. Wait 5-10 minutes for the first few checks to complete
+2. Go to **Monitoring** tab in UptimeRobot dashboard
+3. Your monitor should show a green **"Up"** status
+4. Response time should be ~200-500ms
+
+### Step 8.4: What the Health Endpoint Returns
+
+UptimeRobot pings `GET https://2goi.in/api/health`, which returns:
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "redis": "connected"
+}
+```
+
+If the database or Redis is down, it returns `"degraded"` instead of `"healthy"`. UptimeRobot treats any HTTP 200 response as "Up".
+
+### Important Notes
+
+- **Cost:** Completely free (UptimeRobot free tier supports up to 50 monitors)
+- **No code changes needed:** The health endpoint already exists at `/api/health`
+- **HEAD + GET support:** The health endpoint accepts both `GET` and `HEAD` HTTP methods for compatibility with all monitoring tools
+- **Bonus features:** UptimeRobot provides uptime percentage tracking, response time graphs, and email alerts when the site goes down
+
+---
+
+## 9. Environment Variables Reference
 
 ### Backend Variables (set in Render dashboard or `.env` locally)
 
@@ -465,7 +539,7 @@ The project already contains these SEO files:
 
 ---
 
-## 9. Verification Checklist
+## 10. Verification Checklist
 
 After completing all setup steps, verify everything works:
 
@@ -501,6 +575,13 @@ After completing all setup steps, verify everything works:
 - [ ] Google Search Console shows property as verified
 - [ ] Sitemap submitted successfully
 - [ ] URL inspection shows "URL is on Google" (after a few days)
+
+### Uptime Monitoring
+
+- [ ] UptimeRobot account created
+- [ ] Monitor added for `https://2goi.in/api/health`
+- [ ] Monitor shows green "Up" status
+- [ ] Email notifications enabled
 
 ---
 
@@ -554,6 +635,7 @@ After completing all setup steps, verify everything works:
 | Resend | Free | $0/month | 3,000 emails/month |
 | Google Cloud | Free | $0/month | OAuth is free, no limits |
 | Google Search Console | Free | $0/forever | Unlimited |
+| UptimeRobot | Free | $0/month | 50 monitors, 5-min interval |
 | GoDaddy Domain | Paid | ~$8/year | Yearly renewal |
 | **Total** | | **~$0.67/month** | |
 

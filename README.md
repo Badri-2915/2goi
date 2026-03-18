@@ -49,6 +49,7 @@ Client -> FastAPI -> Redis Cache (hit? -> 302 redirect)
 | Cache | Redis (hot-link caching with TTL) |
 | Auth | Supabase Auth (ES256 JWT verified via JWKS endpoint) |
 | Hosting | Render (Docker, free tier) |
+| Monitoring | UptimeRobot (5-min health pings to prevent cold starts) |
 | Domain | 2goi.in (GoDaddy) |
 
 ---
@@ -182,6 +183,21 @@ curl -X POST https://2goi.in/api/shorten \
 7. Add DNS records on GoDaddy as shown by Render
 8. Configure Supabase Auth redirect URL: `https://2goi.in/**`
 
+### Uptime Monitoring (UptimeRobot)
+
+Render's free tier **sleeps the service after 15 minutes of inactivity**. The first request after sleep takes 30-60 seconds (cold start). To prevent this:
+
+1. Create a free account at [uptimerobot.com](https://uptimerobot.com)
+2. Add a new **HTTP(s)** monitor:
+   - **URL:** `https://2goi.in/api/health`
+   - **Interval:** 5 minutes
+3. Save — UptimeRobot pings the health endpoint every 5 minutes, keeping the container warm 24/7
+
+**Why UptimeRobot + Render?**
+- Render hosts the app but puts it to sleep when idle (free tier limitation)
+- UptimeRobot sends a real HTTP request every 5 minutes, preventing sleep
+- Bonus: UptimeRobot emails you if the site goes down (free uptime alerts)
+
 ---
 
 ## Database Schema
@@ -200,7 +216,7 @@ users (id UUID PK, email, plan, created_at)
 | Document | Description |
 |----------|-------------|
 | [DOCUMENTATION.md](./DOCUMENTATION.md) | Complete project documentation — architecture, code, API, database, deployment |
-| [SETUP_GUIDE.md](./SETUP_GUIDE.md) | Step-by-step setup guide — Supabase, Google OAuth, GoDaddy DNS, Render, Resend, Google Search Console |
+| [SETUP_GUIDE.md](./SETUP_GUIDE.md) | Step-by-step setup guide — Supabase, Google OAuth, GoDaddy DNS, Render, Resend, Google Search Console, UptimeRobot |
 
 ---
 
@@ -213,4 +229,5 @@ users (id UUID PK, email, plan, created_at)
 | Supabase (database + auth) | Free |
 | Resend (emails) | Free (3,000/month) |
 | Google Cloud (OAuth) | Free |
+| UptimeRobot (uptime monitoring) | Free (50 monitors) |
 | **Total** | **~₹67/month (domain only)** |
