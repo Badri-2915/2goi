@@ -30,3 +30,10 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Academic report & interview prep (local only, not for GitHub)
+PROJECT_REPORT.md
+PROJECT_REPORT.docx
+PROJECT_REPORT.pdf
+PROJECT_REPORT.html
+INTERVIEW_PREP.md

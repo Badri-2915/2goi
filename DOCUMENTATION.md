@@ -16,13 +16,15 @@
 12. [Base62 Short Code Generation](#base62-short-code-generation)
 13. [Daily Click Aggregation](#daily-click-aggregation)
 14. [Deployment](#deployment)
-15. [Local Development Setup](#local-development-setup)
-16. [Environment Variables](#environment-variables)
-17. [File-by-File Explanation](#file-by-file-explanation)
-18. [Sample Input/Output](#sample-inputoutput)
-19. [Cost Breakdown](#cost-breakdown)
-20. [Security](#security)
-21. [Setup & Configuration Guide](#setup--configuration-guide)
+15. [Uptime Monitoring (UptimeRobot)](#uptime-monitoring-uptimerobot)
+16. [Local Development Setup](#local-development-setup)
+17. [Environment Variables](#environment-variables)
+18. [File-by-File Explanation](#file-by-file-explanation)
+19. [Sample Input/Output](#sample-inputoutput)
+20. [Cost Breakdown](#cost-breakdown)
+21. [Security](#security)
+22. [Third-Party Services](#third-party-services)
+23. [Setup & Configuration Guide](#setup--configuration-guide)
 
 ---
 
@@ -71,6 +73,8 @@
 | **Cache** | Redis | In-memory store for sub-5ms redirects |
 | **Auth** | Supabase Auth | Handles signup, login, OAuth, JWT tokens |
 | **Hosting** | Render | Free Docker deployment with custom domains |
+| **Monitoring** | UptimeRobot | Pings health endpoint every 5 min to prevent Render cold starts |
+| **Email** | Resend | Transactional emails (signup confirmation) from noreply@2goi.in |
 | **Domain** | GoDaddy | Domain registration for 2goi.in |
 
 ---
@@ -98,6 +102,10 @@ Everything runs on one domain (`2goi.in`) in a single Docker container:
         Supabase   Vite     Redis
         PostgreSQL Build    Cache
                     Output
+
+  External Monitoring:
+        UptimeRobot → pings GET /api/health every 5 min
+                      (prevents Render free tier from sleeping)
 ```
 
 ### Request Flow
@@ -427,7 +435,11 @@ users (1) ——→ (many) links (1) ——→ (many) clicks
 }
 ```
 
-### GET /api/health — Health check
+### GET/HEAD /api/health — Health check
+
+Accepts both `GET` and `HEAD` methods for compatibility with monitoring tools like UptimeRobot.
+
+This endpoint is pinged every 5 minutes by UptimeRobot to keep the Render container alive (prevents free tier cold starts).
 
 **Response:**
 ```json
@@ -620,7 +632,72 @@ Render (auto-deploy)
         ├── Supabase PostgreSQL (ap-south-1)
         ├── Render Redis (same region)
         └── Custom domain: 2goi.in
+
+  UptimeRobot (external)
+      |
+      └── Pings GET /api/health every 5 min
+          → Keeps container alive 24/7 (prevents Render free tier cold starts)
 ```
+
+---
+
+## Uptime Monitoring (UptimeRobot)
+
+### The Problem: Render Free Tier Cold Starts
+
+Render's free tier puts the Docker container to sleep after **15 minutes of inactivity**. The next request triggers a cold start that takes **30-60 seconds** while:
+1. Docker container spins up
+2. Python loads FastAPI and all dependencies
+3. Database and Redis connections are established
+
+This makes the site appear broken or extremely slow to visitors.
+
+### The Solution: UptimeRobot Health Pings
+
+UptimeRobot (free monitoring service) sends an HTTP `GET` request to `https://2goi.in/api/health` every 5 minutes. Since Render only checks "has any request arrived in the last 15 minutes?", these pings keep the container running permanently.
+
+```
+UptimeRobot (North America)
+    |
+    | GET https://2goi.in/api/health (every 5 min)
+    |
+    v
+Render Container
+    |
+    | Returns: {"status": "healthy", "database": "connected", "redis": "connected"}
+    |
+    Result: Container stays warm → no cold starts → instant response for real users
+```
+
+### What UptimeRobot Does vs. What Render Does
+
+| Tool | Role | What It Does |
+|------|------|--------------|
+| **Render** | Hosting | Runs the Docker container, serves the app, provides the URL |
+| **UptimeRobot** | Monitoring | Sends HTTP pings every 5 min to prevent sleep + email alerts on downtime |
+
+### Render Challenges Fixed by UptimeRobot
+
+| Render Free Tier Problem | How UptimeRobot Fixes It |
+|--------------------------|-------------------------|
+| Service sleeps after 15 min inactivity | Pings every 5 min — service never goes idle |
+| Cold start takes 30-60 sec | No cold starts — container stays warm 24/7 |
+| Health checks fail during sleep | Continuous pings keep health checks green |
+| Users think the site is broken/slow | Site always responds instantly (~200-500ms) |
+
+### Technical Detail: HEAD Method Support
+
+UptimeRobot may send `HEAD` requests instead of `GET`. The health endpoint supports both:
+```python
+@router.api_route("/api/health", methods=["GET", "HEAD"])
+```
+
+### Bonus Benefits
+
+- **Uptime tracking:** Dashboard shows 99.9%+ uptime percentage
+- **Response time graphs:** Visualize API performance over time
+- **Downtime alerts:** Email notification if the site goes down
+- **Cost:** Completely free (50 monitors, 5-min interval)
 
 ### DNS Configuration (GoDaddy)
 
@@ -725,7 +802,7 @@ cd frontend && npm run dev         # Start frontend separately
 | `routers/redirect.py` | GET /{code} — Redis check → DB fallback → 302 redirect + async click logging |
 | `routers/links.py` | GET /api/links (paginated list), DELETE /api/links/{id} (soft delete + cache invalidation) |
 | `routers/analytics.py` | GET /api/analytics/{code} — returns total clicks, country/device/browser/daily breakdowns |
-| `routers/health.py` | GET /api/health — checks database and Redis connectivity |
+| `routers/health.py` | GET/HEAD /api/health — checks database and Redis connectivity. Pinged by UptimeRobot every 5 min to prevent Render cold starts |
 | `schemas/link.py` | Pydantic models for link creation, response, and list response with validation |
 | `schemas/click.py` | Pydantic models for analytics response with all breakdown types |
 
@@ -830,6 +907,10 @@ curl https://2goi.in/api/health
 | Render Web (free tier) | $0/month | Forever |
 | Render Redis (free tier) | $0/month | Forever |
 | Supabase DB + Auth (free tier) | $0/month | Forever |
+| Resend (email service) | $0/month | 3,000 emails/month |
+| UptimeRobot (uptime monitoring) | $0/month | 50 monitors, 5-min interval |
+| Google Cloud (OAuth) | $0/month | Forever |
+| Google Search Console (SEO) | $0/month | Forever |
 | GoDaddy domain (2goi.in) | ~$8/year | Yearly renewal |
 | **Total** | **~$0.67/month** | |
 
@@ -861,9 +942,25 @@ curl https://2goi.in/api/health
 
 ---
 
+## Third-Party Services
+
+All external services used in this project:
+
+| Service | Purpose | Free Tier Limits | URL |
+|---------|---------|-----------------|-----|
+| **Supabase** | PostgreSQL database + authentication (email/password + Google OAuth) | 500MB DB, 50K auth users | https://supabase.com |
+| **Render** | Docker container hosting + Redis cache | 750 hrs/month, sleeps after 15 min inactivity | https://render.com |
+| **UptimeRobot** | Uptime monitoring — pings /api/health every 5 min to prevent Render cold starts | 50 monitors, 5-min interval | https://uptimerobot.com |
+| **Resend** | Transactional emails (signup confirmation) from noreply@2goi.in | 3,000 emails/month | https://resend.com |
+| **Google Cloud Console** | Google OAuth (Login with Google) | Free, no limits | https://console.cloud.google.com |
+| **Google Search Console** | SEO — sitemap submission, URL indexing, search performance | Free, unlimited | https://search.google.com/search-console |
+| **GoDaddy** | Domain registration and DNS management for 2goi.in | ~$8/year | https://godaddy.com |
+
+---
+
 ## Setup & Configuration Guide
 
-For a complete step-by-step guide on configuring all external services (Supabase, Google Cloud Console, GoDaddy DNS, Render, Resend, Google Search Console), see:
+For a complete step-by-step guide on configuring all external services (Supabase, Google Cloud Console, GoDaddy DNS, Render, Resend, Google Search Console, UptimeRobot), see:
 
 **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**
 
@@ -874,6 +971,7 @@ This guide covers:
 - Render deployment with Docker and environment variables
 - Resend email service integration for transactional emails
 - Google Search Console for SEO indexing
+- UptimeRobot setup for 24/7 uptime monitoring and cold start prevention
 - Complete environment variables reference
 - Verification checklist and troubleshooting
 
