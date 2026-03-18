@@ -44,7 +44,13 @@ export default function SignupPage() {
       toast.success('Account created! Check your email to confirm (may take 1-2 minutes).', { duration: 6000 })
       navigate('/login')
     } catch (err) {
-      toast.error(err.message || 'Failed to create account')
+      const msg = err.message || 'Failed to create account'
+      if (msg.includes('already exists')) {
+        toast.error(msg, { duration: 5000 })
+        navigate('/login')
+      } else {
+        toast.error(msg)
+      }
     } finally {
       setLoading(false)
     }

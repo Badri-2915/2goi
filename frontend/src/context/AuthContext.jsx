@@ -59,6 +59,10 @@ export function AuthProvider({ children }) {
   const signUp = async (email, password) => {
     const { data, error } = await supabase.auth.signUp({ email, password })
     if (error) throw error
+    // Supabase returns a fake user with empty identities if the email already exists
+    if (data?.user?.identities?.length === 0) {
+      throw new Error('An account with this email already exists. Please sign in instead.')
+    }
     return data
   }
 
