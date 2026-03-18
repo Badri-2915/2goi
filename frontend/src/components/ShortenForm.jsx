@@ -29,11 +29,17 @@ export default function ShortenForm() {
     e.preventDefault()
     if (!url.trim()) return
 
+    // Auto-prepend https:// if user didn't include a protocol
+    let finalUrl = url.trim()
+    if (!/^https?:\/\//i.test(finalUrl)) {
+      finalUrl = 'https://' + finalUrl
+    }
+
     setLoading(true)
     setResult(null)
     try {
       const data = await shortenUrl(
-        url.trim(),
+        finalUrl,
         customAlias.trim() || null,
         expiresIn ? parseInt(expiresIn) : null
       )
