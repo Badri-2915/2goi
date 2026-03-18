@@ -22,7 +22,7 @@ from app.redis_client import get_redis
 router = APIRouter(tags=["Health"])
 
 
-@router.get("/api/health")
+@router.api_route("/api/health", methods=["GET", "HEAD"])
 async def health_check(db: AsyncSession = Depends(get_db)):
     """Check database and Redis connectivity. Used by Render health checks."""
     status = {"status": "healthy", "database": "unknown", "redis": "unknown"}
