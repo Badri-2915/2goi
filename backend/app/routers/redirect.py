@@ -59,8 +59,8 @@ async def redirect_short_url(
 ):
     """Redirect a short URL to its original destination. Returns HTTP 302."""
     # Skip API paths and frontend routes (these should NOT be treated as short codes)
-    frontend_routes = {"login", "signup", "dashboard", "analytics", "favicon.svg", "assets", "sitemap.xml", "robots.txt", "google9b58524465f218d0.html"}
-    if short_code.startswith("api") or short_code in frontend_routes or short_code.startswith("assets") or "." in short_code:
+    frontend_routes = {"login", "signup", "dashboard", "analytics", "favicon.svg", "assets"}
+    if short_code.startswith("api") or short_code in frontend_routes or short_code.startswith("assets"):
         raise HTTPException(status_code=404, detail="Not found")
 
     # Step 1: Check Redis cache

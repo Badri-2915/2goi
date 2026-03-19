@@ -102,13 +102,14 @@ app.include_router(health.router)      # GET /api/health
 app.include_router(shorten.router)     # POST /api/shorten
 app.include_router(links.router)       # GET /api/links, DELETE /api/links/{id}
 app.include_router(analytics.router)   # GET /api/analytics/{short_code}
-app.include_router(redirect.router)    # GET /{short_code} (catch-all, must be last)
 
 # Serve frontend static assets (Vite build output: JS bundles, CSS, images)
 if STATIC_DIR.exists() and (STATIC_DIR / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(STATIC_DIR / "assets")), name="static-assets")
 
 
+# Static file routes — MUST be registered BEFORE the catch-all redirect router,
+# otherwise /{short_code} would intercept /sitemap.xml, /robots.txt, etc.
 @app.get("/favicon.svg")
 async def favicon():
     favicon_path = STATIC_DIR / "favicon.svg"
@@ -142,6 +143,11 @@ async def sitemap():
     if sitemap_path.exists():
         return FileResponse(str(sitemap_path), media_type="application/xml")
     return {"detail": "Not found"}
+
+
+# Catch-all redirect router — MUST be last so it doesn't intercept
+# /sitemap.xml, /robots.txt, /favicon.svg, etc.
+app.include_router(redirect.router)    # GET /{short_code}
 
 
 @app.get("/")
