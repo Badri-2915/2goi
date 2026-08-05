@@ -31,9 +31,7 @@ Thumbs.db
 .coverage
 htmlcov/
 
-# Academic report & interview prep (local only, not for GitHub)
-PROJECT_REPORT.md
+# Academic report binary formats (local only)
 PROJECT_REPORT.docx
 PROJECT_REPORT.pdf
 PROJECT_REPORT.html
-INTERVIEW_PREP.md
